@@ -21,5 +21,5 @@ Desarrollar habilidades prácticas en detección, análisis y respuesta a incide
 
 Aquí puedes ver los reportes detallados de cada investigación:
 
-* [🕵️‍♂️ Análisis Sherlock: Bruto](./Sherlock - Bruto (HTB).md) - *Forense en Linux y Fuerza Bruta SSH.*
-* [☁️ Análisis Sherlock: Vantage](./Sherlock-Vantage.md) - *Seguridad Cloud, APIs y OpenStack.*
+[🕵️‍♂️ Análisis Sherlock: Bruto](./Sherlock%20-%20Bruto%20(HTB).md)
+* [☁️ Análisis Sherlock: Vantage](./Sherlock-Vantage.md)
