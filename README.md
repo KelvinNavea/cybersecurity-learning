@@ -16,3 +16,10 @@ Repositorio donde documento mi aprendizaje en ciberseguridad, enfocado en:
 ## Objetivo
 
 Desarrollar habilidades prácticas en detección, análisis y respuesta a incidentes de seguridad.
+
+## 📂 Mis Análisis de Sherlocks (Hack The Box)
+
+Aquí puedes ver los reportes detallados de cada investigación:
+
+* [🕵️‍♂️ Análisis Sherlock: Bruto](./Sherlock-Bruto.md) - *Forense en Linux y Fuerza Bruta SSH.*
+* [☁️ Análisis Sherlock: Vantage](./Sherlock-Vantage.md) - *Seguridad Cloud, APIs y OpenStack.*
