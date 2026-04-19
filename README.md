@@ -19,10 +19,15 @@ Desarrollar habilidades prácticas en detección, análisis y respuesta a incide
 
 ## 📂 Mis Análisis de Sherlocks (Hack The Box)
 
-Aquí puedes ver los reportes detallados de cada investigación:
+### 🕵️‍♂️ DFIR (Digital Forensics & Incident Response)
+* [🔍 Análisis: MangoBleed](./DFIR/Sherlock-MangoBleed.md) - *Explotación de memoria en base de datos MongoDB.*
+* [☁️ Análisis: Vantage](./DFIR/Sherlock-Vantage.md) - *Investigación de brecha en infraestructura Cloud.*
+* [🐧 Análisis: Bruto](./DFIR/Sherlock-Bruto.md) - *Forense en Linux y análisis de ataques SSH.*
 
 ### 🛡️ SOC (Security Operations Center)
-* [📡 Análisis: Telly](./SOC/Sherlock-Telly.md) - *Monitoreo de red y exfiltración de datos.*
+* [📡 Análisis: Telly](./SOC/Sherlock-Telly.md) - *Monitoreo de red (PCAP) y detección de exfiltración.*
 
-* [🕵️‍♂️ Análisis Sherlock: Bruto](./Sherlock%20-%20Bruto%20(HTB).md)
-* [☁️ Análisis Sherlock: Vantage](./Sherlock-Vantage.md)
+### 🧠 Threat Intelligence
+* *(Próximamente)*
+
+---
