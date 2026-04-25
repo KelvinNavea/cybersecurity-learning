@@ -1,42 +1,45 @@
-# Reporte de Análisis: Sherlock - MangoBleed (HTB)
+# 🕵️ Análisis de Incidentes: Sherlock - MangoBleed (DFIR)
 
-## 1. Escenario del Incidente
-Se recibió una alerta sobre el servidor `mongodbsync` (MongoDB secundario) por una posible explotación de la vulnerabilidad conocida como **MongoBleed**. 
-Como analista DFIR, el objetivo es analizar el triaje del sistema para identificar el acceso inicial, la actividad del atacante y los posibles intentos de exfiltración de datos.
+## 📌 Descripción del Caso
+Investigación de una alerta en el servidor `mongodbsync` por el uso de un exploit conocido como **MongoBleed**. El objetivo fue analizar los logs del sistema para identificar cómo entró el atacante, qué buscaba dentro de la base de datos y cómo intentó llevarse la información.
 
-## 2. Resumen de Hallazgos
-
-| Ítem | Información Identificada |
-| :--- | :--- |
-| **CVE Identificado** | `CVE-2025-14847` |
-| **Versión de MongoDB** | `8.0.16` |
-| **IP del Atacante** | `65.0.76.43` |
-| **Inicio del Ataque (UTC)** | `2025-12-29 05:25:52` |
-| **Conexiones Maliciosas** | `75260` total |
-| **Acceso Remoto Exitoso** | `2025-12-29 05:40:03` |
-| **Directorio Objetivo** | `/var/lib/mongodb` |
-
-## 3. Análisis Técnico (Metodología)
-
-### Fase 1: Identificación de la Vulnerabilidad
-El análisis comenzó investigando la vulnerabilidad **MongoBleed**. Esta vulnerabilidad afecta a versiones específicas de MongoDB y permite la lectura de memoria del proceso, 
-lo que puede exponer credenciales o datos sensibles. Se confirmó la versión instalada en el sistema para validar la superficie de ataque.
-
-### Fase 2: Análisis de Logs de MongoDB
-Se analizaron los logs ubicados en la carpeta `system` / `var/log/mongodb/`. 
-* **Identificación de la IP:** Se filtraron las conexiones entrantes para aislar la IP de origen que realizó peticiones anómalas consistentes con el exploit de MongoBleed.
-* **Timeline:** Se reconstruyó la línea de tiempo detectando el primer evento malicioso, seguido de una serie de conexiones rápidas que indican un proceso automatizado o de fuerza bruta.
-
-### Fase 3: Escalada de Privilegios y Persistencia
-Tras el compromiso del servicio MongoDB, el atacante logró obtener acceso interactivo al sistema. El análisis de los artefactos de `live_response` y logs de comandos permitió identificar:
-* La ejecución de un **script in-memory** (sin escribir en disco) para elevar privilegios.
-* El uso de un servidor web temporal en **Python** para preparar la exfiltración de un directorio específico identificado en el sistema de archivos.
-
-## 4. Mapeo MITRE ATT&CK
-* **Initial Access:** T1190 - Exploit Public-Facing Application (MongoBleed).
-* **Privilege Escalation:** T1059.004 - Command and Scripting Interpreter: Unix Shell.
-* **Exfiltration:** T1567 - Exfiltration Over Web Service (Python SimpleHTTPServer).
+## 🛡️ Resumen Ejecutivo
+* **Activo Afectado:** Servidor de base de datos MongoDB.
+* **Vulnerabilidad:** CVE-2025-14847 (MongoBleed).
+* **Impacto:** Lectura no autorizada de la memoria del servidor y posible robo de credenciales.
+* **Actividad Detectada:** Gran volumen de conexiones automatizadas y uso de un servidor web temporal para mover archivos.
 
 ---
-**Nota de Analista:** Es imperativo parchear la instancia de MongoDB a una versión no vulnerable y revisar las 
-reglas de firewall para limitar el acceso al puerto de la base de datos solo a IPs autorizadas.
+
+## 🛠️ Metodología de Análisis
+
+### 1. Identificación de la Vulnerabilidad
+El análisis comenzó verificando la versión de MongoDB instalada (8.0.16), la cual es vulnerable a **MongoBleed**. Esta falla permite que un atacante "lea" partes de la memoria del servidor que no debería ver, exponiendo potencialmente datos que están en uso en ese momento.
+
+### 2. Análisis de Logs de Conexión
+Se revisaron los logs en `/var/log/mongodb/` para rastrear la actividad sospechosa:
+* **Identificación de la IP:** Se aisló una dirección IP externa que realizó miles de peticiones en un tiempo muy corto. Este comportamiento no es humano y coincide con el uso de herramientas automatizadas para explotar la base de datos.
+* **Timeline:** Se estableció que el ataque comenzó con ráfagas de conexiones rápidas y culminó con un acceso exitoso al sistema de archivos minutos después.
+
+### 3. Actividad Post-Compromiso
+Una vez que el atacante logró manipular el servicio, se detectaron acciones para extraer información:
+* **Ejecución de Scripts:** Se identificó el uso de comandos en la terminal para intentar subir de nivel de privilegios.
+* **Exfiltración de Datos:** El atacante levantó un servidor web muy básico usando **Python** (una herramienta que ya viene en casi todos los Linux) para intentar descargar una carpeta específica del servidor hacia su propia máquina.
+
+---
+
+## 📊 Mapeo de Técnicas (MITRE ATT&CK)
+
+| Táctica | Técnica | ID |
+| :--- | :--- | :--- |
+| **Acceso Inicial** | Explotación de Aplicación Pública (MongoBleed) | T1190 |
+| **Ejecución** | Intérprete de Comandos y Scripts (Unix Shell) | T1059.004 |
+| **Exfiltración** | Exfiltración sobre servicio Web (Python HTTP Server) | T1567 |
+
+---
+
+## 🔍 Recomendaciones de Remediación
+
+* **Actualización Urgente:** Parchear o actualizar MongoDB a una versión que no sea vulnerable a MongoBleed. Esta es la única forma definitiva de cerrar la puerta que usó el atacante.
+* **Restricción de Red (Firewall):** Configurar el firewall para que la base de datos no sea visible desde todo Internet. Solo deberían poder conectarse las IP de los servidores de la empresa que realmente necesiten usar la base de datos.
+* **Monitoreo de Procesos Inusuales:** Estar atentos a la ejecución de comandos como `python -m http.server` en servidores que no deberían estar compartiendo archivos por web. Si un servidor de base de datos empieza a actuar como servidor web, es una señal de alerta inmediata.
