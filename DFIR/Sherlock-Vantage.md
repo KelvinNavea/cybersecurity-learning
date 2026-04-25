@@ -1,46 +1,45 @@
-# Reporte de Análisis: Sherlock - Vantage (HTB)
+# 🕵️ Análisis de Incidentes: Sherlock - Vantage (DFIR)
 
-## 1. Escenario del Incidente
-Una empresa migró recursos a una nube privada. Debido a una mala configuración (redirección expuesta al panel de control), 
-un atacante logró infiltrarse. El equipo de seguridad recibió una notificación de filtración de datos de usuario. 
-El objetivo es reconstruir el ataque desde el reconocimiento inicial hasta la exfiltración y persistencia en el entorno OpenStack.
+## 📌 Descripción del Caso
+Investigación de una filtración de datos en una infraestructura de nube privada (OpenStack). Debido a una configuración de red incorrecta, un panel de administración quedó expuesto a internet, permitiendo que un atacante realizara un escaneo, ganara acceso y robara información sensible de los contenedores de almacenamiento.
 
-## 2. Resumen de Hallazgos
-
-| Ítem | Información Identificada |
-| :--- | :--- |
-| **Herramienta de Fuzzing** | ffuf@2.1.0 |
-| **Subdominio Descubierto** | cloud |
-| **Fuerza Bruta al Panel** | 3 intentos fallidos |
-| **ID de Proyecto OpenStack** | 9fb84977ff7c4a0baf0d5dbb57e235c7 |
-| **Servicio de Autenticación** | keystone |
-| **Contenedores Descubiertos** | 3 |
-| **Usuario de Persistencia** | jellibean |
-
-## 3. Análisis Técnico (Metodología)
-
-### Fase 1: Reconocimiento y Descubrimiento
-El atacante comenzó realizando un "fuzzing" de directorios y subdominios. Mediante el análisis de los logs del servidor web (Access Logs), 
-se identificó el User-Agent de la herramienta utilizada y el subdominio específico que devolvió un código de estado `200 OK`, permitiendo al atacante localizar el panel de gestión.
-
-### Fase 2: Explotación y Acceso a la API
-Tras obtener acceso al panel mediante fuerza bruta, el atacante descargó credenciales de acceso remoto (`openrc`). 
-El análisis de los timestamps en los logs de descarga y las posteriores llamadas a la API permiten determinar 
-el momento exacto en que el atacante comenzó a interactuar con el nodo controlador de OpenStack.
-
-### Fase 3: Exfiltración de Objetos (Object Storage)
-Utilizando el servicio **Swift** (almacenamiento de objetos de OpenStack), el atacante enumeró contenedores y localizó archivos sensibles. 
-Se identificó la URL del endpoint y se confirmó la descarga de una base de datos de usuarios, validando la notificación de filtración recibida por la empresa.
-
-### Fase 4: Persistencia en la Nube
-Para asegurar el acceso futuro, el atacante utilizó sus privilegios actuales para crear un nuevo usuario administrativo dentro del servicio de identidad (**Keystone**).
-Esto le permite mantener el control total del entorno aunque las credenciales originales sean comprometidas o cambiadas.
-
-## 4. Mapeo MITRE ATT&CK
-* **Reconnaissance:** T1595 - Active Scanning.
-* **Credential Access:** T1110 - Brute Force.
-* **Exfiltration:** T1537 - Transfer Data to Cloud Account.
-* **Persistence:** T1136.003 - Cloud Account.
+## 🛡️ Resumen Ejecutivo
+* **Activo Afectado:** Panel de control de nube privada (OpenStack).
+* **Vector de Entrada:** Exposición de subdominio crítico y ataque de fuerza bruta.
+* **Impacto:** Filtración de base de datos de usuarios y creación de una cuenta administrativa no autorizada.
+* **Herramientas Detectadas:** Herramientas de escaneo de directorios (Fuzzing).
 
 ---
-**Nota de Analista:** Este incidente resalta la importancia de no exponer paneles de administración a internet y de implementar políticas de "Least Privilege" en las políticas de IAM de la nube.
+
+## 🛠️ Metodología de Análisis
+
+### 1. Reconocimiento y Descubrimiento
+El análisis de los registros de acceso (*Access Logs*) del servidor web reveló que un atacante estaba buscando subdominios ocultos. Se identificó el uso de una herramienta automatizada que probó miles de nombres hasta encontrar el subdominio `cloud`, el cual devolvió una respuesta positiva y permitió al atacante localizar el panel de acceso.
+
+### 2. Acceso y Uso de la API
+Tras probar contraseñas y lograr entrar al panel, el atacante descargó archivos de configuración que contenían credenciales de acceso. Con estas llaves, comenzó a realizar peticiones directamente a la "maquinaria" de la nube (la API), permitiéndole listar todos los recursos disponibles sin necesidad de usar la interfaz visual.
+
+### 3. Robo de Información (Almacenamiento de Objetos)
+El atacante exploró los contenedores de almacenamiento (similares a carpetas en la nube) y localizó archivos de bases de datos. Se confirmó la descarga de estos archivos, lo que explica la notificación de filtración de datos que recibió la empresa.
+
+### 4. Persistencia en la Nube
+Para no perder el acceso, el atacante creó un nuevo usuario con permisos de administrador dentro del sistema de identidad de la nube. Esto significa que, aunque la empresa cerrara el panel o cambiara la clave original, el atacante podría seguir entrando con su propio "usuario secreto".
+
+---
+
+## 📊 Mapeo de Técnicas (MITRE ATT&CK)
+
+| Táctica | Técnica | ID |
+| :--- | :--- | :--- |
+| **Reconocimiento** | Escaneo Activo (Fuzzing) | T1595 |
+| **Acceso a Credenciales** | Fuerza Bruta (Brute Force) | T1110 |
+| **Exfiltración** | Transferencia de datos a cuenta externa | T1537 |
+| **Persistencia** | Creación de Cuenta en la Nube | T1136.003 |
+
+---
+
+## 🔍 Recomendaciones de Remediación
+
+* **Cerrar Paneles de Administración:** No permitir que los paneles de gestión de la nube sean accesibles desde cualquier lugar de internet. Se deben proteger detrás de una VPN o restringir el acceso solo a las oficinas de la empresa.
+* **Limpieza de Usuarios:** Revisar el listado de usuarios de la nube y eliminar inmediatamente cualquier cuenta que no haya sido creada por el equipo de IT (como la cuenta detectada en este análisis).
+* **Principio de Menor Privilegio:** Revisar los permisos de los usuarios actuales. Un usuario no debería poder ver o descargar todas las bases de datos de la empresa a menos que sea estrictamente necesario para su trabajo.
