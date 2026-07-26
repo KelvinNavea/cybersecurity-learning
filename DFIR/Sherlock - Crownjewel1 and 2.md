@@ -1,4 +1,4 @@
-# Caso de Estudio: Análisis DFIR - CoronaJewel (Parte 1 y Parte 2)
+# Caso de Estudio: Análisis DFIR - CrownJewel (Parte 1 y Parte 2)
 
 ## 📋 Descripción del Caso
 Este repositorio documenta el análisis forense de respuesta a incidentes (DFIR) realizado sobre dos retos consecutivos de Hack The Box (*CoronaJewel Part 1* y *Part 2*). El objetivo fue investigar un ataque dirigido al Controlador de Dominio (DC) de Forela, donde el actor de amenaza logró comprometer cuentas de Administrador de Dominio y abusar de utilidades nativas (*LOLBINs*) para realizar un volcado de la base de datos de Active Directory (**NTDS.dit**).
@@ -33,3 +33,7 @@ Para realizar la investigación utilicé herramientas de análisis forense digit
 * **T1003.003 - OS Credential Dumping: NTDS:** Extracción de credenciales mediante el volcado directo de la base de datos de Active Directory (`NTDS.dit`).
 * **T1562.001 - Impair Defenses: Disable or Modify Tools:** Abuso de utilidades administrativas legítimas del sistema operativo (*vssadmin* y *ntdsutil*) para fines maliciosos (LOLBINs).
 * **T1078 - Valid Accounts:** Uso continuo de credenciales y cuentas de administrador comprometidas para mantener persistencia en el dominio.
+
+[CrownJewel Parte 1]([url](https://labs.hackthebox.com/achievement/sherlock/2858413/737))
+
+[CrownJewel Parte 2 ]([url](https://labs.hackthebox.com/achievement/sherlock/2858413/736))
